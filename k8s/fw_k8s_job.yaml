@@ -1,0 +1,108 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: firmwell-batch # Replace with your unique job name
+spec:
+  completions: 1000 # Set to the number of lines in your <targets_list> file, e.g., 1000
+  parallelism: 128 # Number of parallel pods running simultaneously, adjust based on available CPU cores, e.g., 128
+  completionMode: Indexed 
+  backoffLimit: 10000
+  ttlSecondsAfterFinished: 180
+  podFailurePolicy:
+    rules:
+    - action: Ignore
+      onExitCodes:
+        operator: In
+        values: [42]
+    - action: Count 
+      onExitCodes:
+        operator: NotIn
+        values: [0]
+    - action: Ignore 
+      onPodConditions:
+      - type: DisruptionTarget
+  template:
+    spec:
+      restartPolicy: Never 
+      activeDeadlineSeconds: 216000 
+      containers:
+      - name: worker
+        image: ghcr.io/qc9c/firmwell:latest
+        imagePullPolicy: Always
+        securityContext:
+          privileged: true
+        resources:
+          limits:
+            memory: "8Gi"
+          requests:
+            memory: "4Gi"
+            cpu: 0.5
+        command:
+        - 'bash'
+        - '-c'
+        - '/fw/entrypoint.sh /shared/demo /shared/targets.list ${JOB_COMPLETION_INDEX}'
+        volumeMounts:
+        - name: nfs-k8-volume 
+          mountPath: "/shared"
+        - name: dev-volume
+          mountPath: /host/dev 
+        - name: shared-volume
+          mountPath: /data
+        env:
+          - name: DOCKER_HOST
+            value: 127.0.0.1
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: JOB_COMPLETION_INDEX
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.annotations['batch.kubernetes.io/job-completion-index']
+      - name: dockerd
+        image: ghcr.io/qc9c/dind:0.1k
+        env:
+          - name: DOCKER_TLS_CERTDIR
+            value: ""
+        securityContext:
+          privileged: True
+        resources:
+          requests:
+            cpu: 0.5
+            memory: "4Gi"
+        command: 
+        - '/bin/sh'
+        - '-c'
+        - '/entrypoint_dind.sh /shared/demo /shared/targets.list ${JOB_COMPLETION_INDEX}'
+        volumeMounts:
+          - name: nfs-k8-volume 
+            mountPath: "/shared"
+          - mountPath: /tmp/docker-root
+            name: ramdisk-volume
+          - name: shared-volume
+            mountPath: /data
+          - name: dshm
+            mountPath: /dev/shm
+      volumes:
+        - name: nfs-k8-volume
+          persistentVolumeClaim:
+            claimName: nfs-k8-pvc
+        - name: ramdisk-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 4Gi
+        - name: dev-volume
+          hostPath:
+            path: /dev
+        - name: shared-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 512Mi

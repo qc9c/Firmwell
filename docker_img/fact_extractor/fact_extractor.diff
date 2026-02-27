@@ -1,0 +1,124 @@
+diff --git a/fact_extractor/unpacker/unpack.py b/fact_extractor/unpacker/unpack.py
+index 84b3cc7..3c059eb 100644
+--- a/fact_extractor/unpacker/unpack.py
++++ b/fact_extractor/unpacker/unpack.py
+@@ -88,19 +88,72 @@ class Unpacker(UnpackBase):
+         except OSError as error:
+             logging.error(f'Could not CleanUp tmp_dir: {error}', exc_info=True)
+ 
++    # def move_extracted_files(self, file_paths: List[str], extraction_dir: Path) -> List[Path]:
++    #     extracted_files = []
++    #     for item in file_paths:
++    #         if not file_is_empty(item) or self.extract_everything:
++    #             absolute_path = Path(item)
++    #             relative_path = absolute_path.relative_to(extraction_dir)
++    #             target_path = Path(self._file_folder, relative_path)
++    #             target_path.parent.mkdir(parents=True, exist_ok=True)
++    #             try:
++    #                 shutil.move(str(absolute_path), str(target_path))
++    #                 extracted_files.append(target_path)
++    #             except OSError as error:
++    #                 logging.error(f'Error occurred during move: {error}')
++
++    #     return extracted_files
++    
+     def move_extracted_files(self, file_paths: List[str], extraction_dir: Path) -> List[Path]:
+         extracted_files = []
++
+         for item in file_paths:
+-            if not file_is_empty(item) or self.extract_everything:
+-                absolute_path = Path(item)
++            absolute_path = Path(item)
++
++            # If it's a symlink, preserve the symlink target
++            if absolute_path.is_symlink():
++                symlink_target = absolute_path.readlink()
+                 relative_path = absolute_path.relative_to(extraction_dir)
+                 target_path = Path(self._file_folder, relative_path)
++                
++                # Ensure the target directory exists
+                 target_path.parent.mkdir(parents=True, exist_ok=True)
++                
++                # Create a symlink instead of copying it
++                try:
++                    # Create symlink if target does not exist
++                    if not target_path.exists():
++                        target_path.symlink_to(symlink_target)
++                        extracted_files.append(target_path)
++                    else:
++                        logging.warning(f"Symlink already exists: {target_path}")
++                except OSError as error:
++                    logging.error(f"Error occurred during symlink move: {error}")
++
++            # Handle regular files and empty directories
++            elif absolute_path.is_dir():
++                relative_path = absolute_path.relative_to(extraction_dir)
++                target_path = Path(self._file_folder, relative_path)
++
++                # Recursively create directories (including empty ones)
+                 try:
+-                    shutil.move(str(absolute_path), str(target_path))
++                    target_path.mkdir(parents=True, exist_ok=True)
+                     extracted_files.append(target_path)
+                 except OSError as error:
+-                    logging.error(f'Error occurred during move: {error}')
++                    logging.error(f"Error occurred during directory creation: {error}")
++
++            else:  # Handle regular files
++                # Check if file is empty or if extract_everything is enabled
++                if not file_is_empty(item) or self.extract_everything:
++                    relative_path = absolute_path.relative_to(extraction_dir)
++                    target_path = Path(self._file_folder, relative_path)
++                    target_path.parent.mkdir(parents=True, exist_ok=True)
++
++                    try:
++                        shutil.move(str(absolute_path), str(target_path))
++                        extracted_files.append(target_path)
++                    except OSError as error:
++                        logging.error(f"Error occurred during file move: {error}")
+ 
+         return extracted_files
+ 
+diff --git a/fact_extractor/unpacker/unpackBase.py b/fact_extractor/unpacker/unpackBase.py
+index ed80238..0b52016 100644
+--- a/fact_extractor/unpacker/unpackBase.py
++++ b/fact_extractor/unpacker/unpackBase.py
+@@ -6,9 +6,35 @@ import logging
+ from os import getgid, getuid
+ from subprocess import PIPE, Popen
+ from time import time
+-from typing import TYPE_CHECKING, Callable, Dict, List, Tuple
+-
+-from common_helper_files import get_files_in_dir
++from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, Union
++
++# from common_helper_files import get_files_in_dir
++
++from pathlib import Path
++
++def get_files_in_dir(directory_path: Union[str, Path]) -> List[str]:
++    '''
++    Returns a list with the absolute paths of all files, directories, and symbolic links in the directory directory_path
++
++    :param directory_path: directory including files
++    '''
++    result = []
++    try:
++        for file_path, dirs, files in os.walk(directory_path, topdown=True):
++            # Add all files to result
++            for file_ in files:
++                result.append(str(Path(file_path, file_).absolute()))
++            # Add empty directories to result
++            for dir_ in dirs:
++                result.append(str(Path(file_path, dir_).absolute()))
++            # Add symbolic links
++            for link in dirs + files:  # Check both files and directories for symlinks
++                full_path = Path(file_path, link)
++                if full_path.is_symlink():
++                    result.append(str(full_path.absolute()))
++    except Exception as exc:
++        logging.error(f'Could not get files: {exc}', exc_info=True)
++    return result
+ 
+ from helperFunctions import magic
+ from helperFunctions.config import read_list_from_config

@@ -1,0 +1,14 @@
+dev:    size   erasesize  za
+mtd0: 00100000 00004000 "config"
+mtd1: 00100000 00004000 "pot"
+mtd2: 00100000 00004000 "firmware2"
+mtd3: 00100000 00004000 "uboot"
+mtd4: 00100000 00004000 "NAND simulator partition 4"
+mtd5: 00100000 00004000 "NAND simulator partition 5"
+mtd6: 00100000 00004000 "NAND simulator partition 6"
+mtd7: 00100000 00004000 "NAND simulator partition 7"
+mtd8: 00100000 00004000 "NAND simulator partition 8"
+mtd9: 00100000 00004000 "NAND simulator partition 9"
+mtd10: 07600000 00004000 "NAND simulator partition 10"
+
+

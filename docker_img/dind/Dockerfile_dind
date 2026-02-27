@@ -1,0 +1,3 @@
+FROM docker:20.10.21-dind
+COPY entrypoint_dind.sh /entrypoint_dind.sh
+RUN chmod +x /entrypoint_dind.sh
