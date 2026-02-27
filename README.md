@@ -119,6 +119,7 @@ This project is inspired by the following open-source projects:
 - [Greenhouse](https://github.com/sefcom/greenhouse)
 - [Pandawan](https://github.com/BUseclab/Pandawan)
 - [FirmAFL](https://github.com/zyw-200/FirmAFL)
+- [ChkUp](https://github.com/WUSTL-CSPL/ChkUp)
 
 
 ## License
