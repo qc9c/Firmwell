@@ -110,6 +110,17 @@ This is an **academic research prototype** developed as part of a research proje
 - This tool is not intended for production use or deployment in any critical infrastructure.
 
 
+## Acknowledgements
+
+This project is inspired by the following open-source projects:
+
+- [Firmadyne](https://github.com/firmadyne/firmadyne)
+- [FirmAE](https://github.com/pr0v3rbs/FirmAE)
+- [Greenhouse](https://github.com/sefcom/greenhouse)
+- [Pandawan](https://github.com/BUseclab/Pandawan)
+- [FirmAFL](https://github.com/zyw-200/FirmAFL)
+
+
 ## License
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
