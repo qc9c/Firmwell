@@ -1628,20 +1628,19 @@ class Rehosting:
             # pf.write(interface_cmds.replace("/fs/greenhouse/ip", "/greenhouse/ip").replace('bash -c "', '').replace('\"', ''))
 
             # update, use fuzz.sh to set netdev
-            if flag == "min": # debug use docker-compose
-                for cmd in interface_cmds:
-                    pf.write(f"/greenhouse/busybox {cmd}\n")
-                # pf.write("/greenhouse/ip addr flush dev eth0\n")
-                # for devName, ip_list in self.network_info.items():
-                #     if len(ip_list) > 0:
-                #         url = ip_list[0]
-                #     else:
-                #         url = '0.0.0.0'
-                #     if devName == "lo":
-                #         continue
-                #     pf.write("/greenhouse/ip link add %s type dummy\n" % devName)
-                #     pf.write("/greenhouse/ip addr add %s/24 dev %s\n" % (url, devName))
-                #     pf.write("/greenhouse/ip link set %s up\n" % devName)
+            for cmd in interface_cmds:
+                pf.write(f"/greenhouse/busybox {cmd}\n")
+            # pf.write("/greenhouse/ip addr flush dev eth0\n")
+            # for devName, ip_list in self.network_info.items():
+            #     if len(ip_list) > 0:
+            #         url = ip_list[0]
+            #     else:
+            #         url = '0.0.0.0'
+            #     if devName == "lo":
+            #         continue
+            #     pf.write("/greenhouse/ip link add %s type dummy\n" % devName)
+            #     pf.write("/greenhouse/ip addr add %s/24 dev %s\n" % (url, devName))
+            #     pf.write("/greenhouse/ip link set %s up\n" % devName)
         pf.close()
         Files.chmod_exe(setupRun)
 
@@ -1654,23 +1653,22 @@ class Rehosting:
             pf.write("/greenhouse/busybox cp -r /ghetc/* /etc\n")
             pf.write("\n")
 
-            if flag == "min":  # debug uses docker-compose
-                for devName, ip_list in self.network_info.items():
-                    if len(ip_list) > 0:
-                        url = ip_list[0]
-                    else:
-                        url = '0.0.0.0'
-                    if devName == "lo":
-                        continue
-                    # If the interface already exists (e.g. eth0 from Docker), flush and reconfigure;
-                    # otherwise create it as a dummy interface.
-                    pf.write("if /greenhouse/ip link show %s >/dev/null 2>&1; then\n" % devName)
-                    pf.write("  /greenhouse/ip addr flush dev %s\n" % devName)
-                    pf.write("else\n")
-                    pf.write("  /greenhouse/ip link add %s type dummy\n" % devName)
-                    pf.write("fi\n")
-                    pf.write("/greenhouse/ip addr add %s/24 dev %s\n" % (url, devName))
-                    pf.write("/greenhouse/ip link set %s up\n" % devName)
+            for devName, ip_list in self.network_info.items():
+                if len(ip_list) > 0:
+                    url = ip_list[0]
+                else:
+                    url = '0.0.0.0'
+                if devName == "lo":
+                    continue
+                # If the interface already exists (e.g. eth0 from Docker), flush and reconfigure;
+                # otherwise create it as a dummy interface.
+                pf.write("if /greenhouse/ip link show %s >/dev/null 2>&1; then\n" % devName)
+                pf.write("  /greenhouse/ip addr flush dev %s\n" % devName)
+                pf.write("else\n")
+                pf.write("  /greenhouse/ip link add %s type dummy\n" % devName)
+                pf.write("fi\n")
+                pf.write("/greenhouse/ip addr add %s/24 dev %s\n" % (url, devName))
+                pf.write("/greenhouse/ip link set %s up\n" % devName)
         pf.close()
         Files.chmod_exe(setup_interface)
 
@@ -2087,7 +2085,9 @@ class Rehosting:
         
         print("get_service_cmdline1")
         for pid, ps in process_dict.items():
-            if ".sh" in ps: # exclude webs.sh
+            # if ".sh" in ps: 
+            # exclude webs.sh
+            if os.path.basename(ps.strip().split(" ")[0]).endswith(".sh"):
                 continue
             
             if ps.startswith("./"):

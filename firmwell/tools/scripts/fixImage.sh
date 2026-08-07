@@ -76,7 +76,7 @@ FILECOUNT="$($BUSYBOX find /dev -maxdepth 1 -type b -o -type c -print | $BUSYBOX
 if [ $FILECOUNT -lt "5" ]; then
     echo "Warning: Recreating device nodes!"
 
-    TMP_BUSYBOX="/firmadyne/busybox"
+    TMP_BUSYBOX="/busybox"
 
 
     ${TMP_BUSYBOX} mknod -m 660 /dev/mem c 1 1

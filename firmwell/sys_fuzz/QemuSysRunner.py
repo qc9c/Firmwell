@@ -206,6 +206,7 @@ class QemuShell:
         
         try:
             print("Creating new socat session...")
+            os.environ.setdefault("PWNLIB_NOTERM", "1")
             import pwn
             
             os.environ["TERM"] = "xterm"
@@ -1395,8 +1396,7 @@ id={self.jobindex}"""
             #     f.write(f"{self.entry.init_bash} \n")
             # else:
             #     f.write(f"{self.entry.init_bash} {self.entry.init_bash_args}\n")
-            f.write("/firmadyne/sh")
-            f.write("/firmadyne/debug.sh\n")
+            f.write("/firmadyne/sh /firmadyne/debug.sh\n")
             f.write('/firmadyne/busybox sleep 36000\n')
         os.chmod(preInitsh_dst, 0o777)
         self.umount_image(work_dir, loopfile)

@@ -174,4 +174,5 @@ if [[ $PG_FAILED != "" ]]; then
 	exit 1
 fi
 
-
+echo "Docker Loading /docker_img/fact_extractor.tar..."
+docker load -i /docker_img/fact_extractor.tar

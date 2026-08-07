@@ -827,6 +827,7 @@ class Planter():
         self.brand = brand
         self.unpack_enhance = unpack_enhance
         self.indicators = ["/bin/sh", "/bin/busybox", "/sbin/lighttpd", "/sbin/xmldb", "/sbin/httpd", "shttpd"]
+        self.potential_http_set = set()
         
         self.args = args
 
